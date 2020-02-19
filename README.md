@@ -44,8 +44,8 @@ you can test using the following cards for KNET.
 
 Bank Name | Card Number | date | pin | result
 ----------|-------------|------|-----|--------
-Knet Test Card | 888888 0000000001 | anything | anything | SUCCESSFUL
-Knet Test Card | 888888 0000000002 | anything | anything | UNSUCCESSFUL
+Knet Test Card | 888888 0000000001 | 09/21 | anything | SUCCESSFUL
+Knet Test Card | 888888 0000000002 | 09/21 | anything | UNSUCCESSFUL
 
 you can check a live example using postman using the following link
 https://documenter.getpostman.com/view/1197088/Rzn9u21K
