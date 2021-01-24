@@ -30,6 +30,7 @@ __You have to save the paymentID and redirect the user to paymentLink.__
 The `responseUrl` will be called by a `post` with the following information
 ```json
 {
+    "result": "CAPTURED",
     "paymentID": "4573662301983620",
     "trackid": "1", 
     "tranid": "4002208311983620",
