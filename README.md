@@ -89,7 +89,7 @@ curl https://niupay.me/api/requestKnet \
 
 ## Get the result
 
-When your customer finishes on KNET's page, NiuPay notifies your server once, then sends your customer back to you.
+When your customer finishes on KNET's page, NiuPay notifies your server, then sends your customer back to you.
 
 **1. The notification.** NiuPay POSTs these form fields to your `responseUrl`:
 
@@ -102,12 +102,46 @@ When your customer finishes on KNET's page, NiuPay notifies your server once, th
 | `ref` | KNET's reference number |
 | `niutrack` | KNET's own payment ID |
 
-- Answer with any 2xx status within 15 seconds. NiuPay doesn't retry, so if your server was down, use the status check.
-- Each payment is notified once. If KNET's own report to NiuPay goes missing, NiuPay asks KNET itself and sends the notification within about an hour.
+- Answer with any 2xx status within 15 seconds.
+- If your server doesn't answer 2xx, NiuPay can send the notification again 1, 5, 30 and 120 minutes later. Retries are off unless you ask NiuPay to turn them on for your company. Your handler must then treat a repeat as a no-op (see Good practice).
+- If KNET's own report to NiuPay goes missing, NiuPay asks KNET itself and sends the notification within about an hour.
+- The notification is signed; see [Check the signature](#check-the-signature).
 
 **2. Your customer's return.** The browser goes to `successUrl?paymentID=…` when paid, or `errorUrl?paymentID=…` when not. A customer can also arrive at your `errorUrl` straight from KNET's page, without a `paymentID`, when KNET itself stops the payment.
 
-Neither the notification nor the return is signed, and anyone can open those addresses. Confirm the result with the status check before you deliver.
+The return isn't signed, and anyone can open your `successUrl` or post to your `responseUrl`. Check the notification's signature, and confirm the result with the status check before you deliver.
+
+### Check the signature
+
+Every notification carries two headers:
+
+| Header | What it holds |
+| --- | --- |
+| `X-NiuPay-Timestamp` | when NiuPay sent it, in Unix seconds |
+| `X-NiuPay-Signature` | base64 of HMAC-SHA256 over the timestamp, a `.`, and the raw request body, keyed with your notification secret |
+
+NiuPay gives you the notification secret together with your API key. It is a 64-character hex string; use it as the key exactly as given. It is different from your API key, and NiuPay can replace it if it leaks.
+
+To check a notification:
+
+- Compute the signature over the raw body as received, before your framework parses it.
+- Compare with a constant-time comparison.
+- Reject a timestamp more than 5 minutes from your clock. Each retry is signed again with a fresh timestamp.
+
+```php
+$body = file_get_contents('php://input');
+$ts   = $_SERVER['HTTP_X_NIUPAY_TIMESTAMP'] ?? '';
+$sig  = $_SERVER['HTTP_X_NIUPAY_SIGNATURE'] ?? '';
+$want = base64_encode(hash_hmac('sha256', $ts . '.' . $body, NIUPAY_NOTIFY_SECRET, true));
+
+if (! hash_equals($want, $sig) || abs(time() - (int) $ts) > 300) {
+    http_response_code(401);
+    exit;
+}
+parse_str($body, $notification); // result, paymentID, trackid, tranid, ref, niutrack
+```
+
+A valid signature proves the notification came from NiuPay. Still confirm with the status check before you deliver.
 
 ## Check a payment: GET api/payments
 
