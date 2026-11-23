@@ -32,12 +32,13 @@ You need an API key and a company account that is active with the payment gatewa
 - **Formats:** you send form fields (`application/x-www-form-urlencoded`) and NiuPay answers in JSON. Amounts are in Kuwaiti dinars with up to 3 decimals, such as `10.500`.
 - **Fees:** your customer pays the amount you send. NiuPay's service fee for your company comes out of each payment when NiuPay pays you out.
 
-KNET test cards, for `type=1` only:
+KNET test card, for `type=1` only:
 
-| Card number | Expiry | PIN | Result |
-| --- | --- | --- | --- |
-| 888888 0000000001 | 09/30 | any | Paid |
-| 888888 0000000002 | 09/30 | any | Declined |
+| Card number | Expiry | PIN |
+| --- | --- | --- |
+| 888888 0000000001 | 09/30 | any |
+
+To try a payment that isn't paid, press **Cancel** on KNET's test page: the result is `CANCELED`. KNET's test terminal also approves `888888 0000000002`, which older lists show as declined, so no test card reliably gives `NOT CAPTURED`. Handle it like `CANCELED`: any result other than `CAPTURED` means not paid.
 
 ## Start a payment: POST api/requestKnet
 
